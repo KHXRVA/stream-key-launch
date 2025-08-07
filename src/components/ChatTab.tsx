@@ -59,6 +59,11 @@ const ChatTab = ({ loadedAccounts, loadedProxies }: ChatTabProps) => {
       timestamp: new Date(Date.now() - 1 * 60 * 1000)
     }
   ]);
+  const [maxMessages] = useState(500); // Twitch standard
+  const [chatSpeed, setChatSpeed] = useState("normal");
+  const [soundNotifications, setSoundNotifications] = useState(false);
+  const [showBadges, setShowBadges] = useState(true);
+  const [fontSize, setFontSize] = useState("medium");
   const [isConnected, setIsConnected] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
@@ -85,7 +90,11 @@ const ChatTab = ({ loadedAccounts, loadedProxies }: ChatTabProps) => {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    setMessages(prev => {
+      const newMessages = [...prev, newMessage];
+      // Keep only last maxMessages (Twitch standard: 500)
+      return newMessages.slice(-maxMessages);
+    });
     
     if (autoClear) {
       setMessage("");
@@ -116,141 +125,95 @@ const ChatTab = ({ loadedAccounts, loadedProxies }: ChatTabProps) => {
   };
 
   return (
-    <div className="h-full flex gap-4">
-      {/* Left Panel - Settings */}
-      <div className="w-80 space-y-4">
-        <Card className="glass-effect border-border/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center space-x-2">
-              <Settings className="w-4 h-4" />
-              <span>Настройки</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Автосмена аккаунта</span>
-              <Switch checked={autoSwitch} onCheckedChange={setAutoSwitch} />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Автоочистка поля</span>
-              <Switch checked={autoClear} onCheckedChange={setAutoClear} />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Автопрокрутка</span>
-              <Switch checked={autoScroll} onCheckedChange={setAutoScroll} />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Показывать время</span>
-              <Switch checked={showTime} onCheckedChange={setShowTime} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Center - Stream Window */}
-      <div className="flex-1 flex flex-col">
-        <Card className="glass-effect border-border/20 flex-1">
-          <CardHeader className="pb-3">
-            <CardTitle>Окно стрима</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1">
-            <div className="w-full h-[400px] bg-muted/20 rounded-lg border-2 border-dashed border-border/30 flex items-center justify-center">
-              <div className="text-center text-muted-foreground">
-                <MessageCircle className="w-12 h-12 mx-auto mb-2" />
-                <p>Здесь будет окно стрима</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Right Panel - Chat + Info */}
-      <div className="w-80 flex flex-col gap-4">
-        {/* Chat */}
-        <Card className="glass-effect border-border/20 flex-1">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Чат</CardTitle>
-              <Badge 
-                variant={isConnected ? "default" : "secondary"}
-                className={isConnected ? "bg-success text-success-foreground" : ""}
-              >
-                {isConnected ? "●" : "○"}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col space-y-3 p-3">
-            {/* Messages */}
-            <ScrollArea className="flex-1 min-h-[200px]" ref={scrollAreaRef}>
-              <div className="space-y-1 pr-2">
-                {messages.map((msg) => (
-                  <div key={msg.id} className="text-xs">
-                    <div className="flex items-baseline space-x-1">
-                      {showTime && (
-                        <span className="text-[10px] text-muted-foreground shrink-0">
-                          {formatTime(msg.timestamp)}
-                        </span>
-                      )}
-                      <span className="font-medium text-primary text-[11px] shrink-0">
-                        {msg.nickname}:
-                      </span>
-                      <span className="text-[11px] break-words">
-                        {msg.message}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-
-            {/* Message Input */}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2 text-xs">
-                <span className="text-muted-foreground">От:</span>
-                <span className="font-medium text-primary">{currentAccount}</span>
-              </div>
-              <div className="flex space-x-1">
-                <Input
-                  placeholder={isConnected ? "Сообщение..." : "Подключитесь"}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  disabled={!isConnected}
-                  className="text-xs h-8"
-                />
-                <Button 
-                  onClick={handleSendMessage}
-                  disabled={!message.trim() || !isConnected}
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                >
-                  <Send className="w-3 h-3" />
-                </Button>
-              </div>
-            </div>
-            
-            {/* Connection Button */}
-            <Button
-              onClick={toggleConnection}
-              variant={isConnected ? "destructive" : "default"}
-              size="sm"
-              className={!isConnected ? "bg-success hover:bg-success/90 text-success-foreground" : ""}
-            >
-              {isConnected ? "Отключить" : "Подключить"}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Info Panel */}
-        <div className="space-y-3">
-          {/* Resources */}
+    <div className="h-full overflow-auto">
+      <div className="flex gap-4 p-4">
+        {/* Left Panel - Settings */}
+        <div className="w-80 space-y-4">
           <Card className="glass-effect border-border/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Ресурсы</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center space-x-2">
+                <Settings className="w-4 h-4" />
+                <span>Настройки чата</span>
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {/* Accounts */}
-              <div>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Автосмена аккаунта</span>
+                <Switch checked={autoSwitch} onCheckedChange={setAutoSwitch} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Автоочистка поля</span>
+                <Switch checked={autoClear} onCheckedChange={setAutoClear} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Автопрокрутка</span>
+                <Switch checked={autoScroll} onCheckedChange={setAutoScroll} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Показывать время</span>
+                <Switch checked={showTime} onCheckedChange={setShowTime} />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Звуковые уведомления</span>
+                <Switch checked={soundNotifications} onCheckedChange={setSoundNotifications} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Показывать значки</span>
+                <Switch checked={showBadges} onCheckedChange={setShowBadges} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Скорость чата</span>
+                <select 
+                  value={chatSpeed} 
+                  onChange={(e) => setChatSpeed(e.target.value)}
+                  className="bg-background border border-border rounded px-2 py-1 text-xs"
+                >
+                  <option value="slow">Медленно</option>
+                  <option value="normal">Нормально</option>
+                  <option value="fast">Быстро</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Размер шрифта</span>
+                <select 
+                  value={fontSize} 
+                  onChange={(e) => setFontSize(e.target.value)}
+                  className="bg-background border border-border rounded px-2 py-1 text-xs"
+                >
+                  <option value="small">Маленький</option>
+                  <option value="medium">Средний</option>
+                  <option value="large">Большой</option>
+                </select>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Center Panel - Stream Window + Resources Below */}
+        <div className="flex-1 space-y-4">
+          {/* Stream Window */}
+          <Card className="glass-effect border-border/20">
+            <CardHeader className="pb-3">
+              <CardTitle>Окно стрима</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="w-full aspect-video bg-muted/20 rounded-lg border-2 border-dashed border-border/30 flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <MessageCircle className="w-12 h-12 mx-auto mb-2" />
+                  <p>Здесь будет окно стрима (16:9)</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Resources Panel */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="glass-effect border-border/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Аккаунты</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <Button
                   variant="outline"
                   className="w-full justify-between text-xs h-8"
@@ -258,7 +221,7 @@ const ChatTab = ({ loadedAccounts, loadedProxies }: ChatTabProps) => {
                 >
                   <div className="flex items-center space-x-2">
                     <Users className="w-3 h-3" />
-                    <span>Аккаунты</span>
+                    <span>Список ботов</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Badge variant="secondary" className="text-xs">
@@ -280,9 +243,9 @@ const ChatTab = ({ loadedAccounts, loadedProxies }: ChatTabProps) => {
                           className="pl-7 text-xs h-7"
                         />
                       </div>
-                      <ScrollArea className="h-24">
+                      <ScrollArea className="h-32">
                         <div className="space-y-1">
-                          {filteredBots.slice(0, 50).map((bot) => (
+                          {filteredBots.map((bot) => (
                             <Button
                               key={bot}
                               variant={currentAccount === bot ? "secondary" : "ghost"}
@@ -295,51 +258,120 @@ const ChatTab = ({ loadedAccounts, loadedProxies }: ChatTabProps) => {
                               {bot}
                             </Button>
                           ))}
-                          {filteredBots.length > 50 && (
-                            <div className="text-xs text-muted-foreground text-center py-1">
-                              +{filteredBots.length - 50} еще...
-                            </div>
-                          )}
                         </div>
                       </ScrollArea>
                     </CardContent>
                   </Card>
                 )}
-              </div>
-              
-              {/* Proxies */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Zap className="w-3 h-3 text-accent" />
-                  <span className="text-xs">Прокси</span>
-                </div>
-                <Badge variant="secondary" className="text-xs">{loadedProxies}</Badge>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Status Info */}
-          <Card className="glass-effect border-border/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Статус</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
+            <Card className="glass-effect border-border/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Статистика</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Прокси:</span>
+                  <Badge variant="secondary" className="text-xs">{loadedProxies}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Состояние:</span>
+                  <Badge variant={isConnected ? "default" : "secondary"} className="text-xs">
+                    {isConnected ? "Активен" : "Неактивен"}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Сообщений:</span>
+                  <span className="text-xs font-medium">{messages.length}/{maxMessages}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Ботов онлайн:</span>
+                  <span className="text-xs font-medium">
+                    {isConnected ? Math.floor(Math.random() * 50) + 10 : 0}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Right Panel - Chat */}
+        <div className="w-80">
+          <Card className="glass-effect border-border/20 h-full">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Состояние:</span>
-                <Badge variant={isConnected ? "default" : "secondary"} className="text-xs">
-                  {isConnected ? "Активен" : "Неактивен"}
+                <CardTitle className="text-lg">Чат стрима</CardTitle>
+                <Badge 
+                  variant={isConnected ? "default" : "secondary"}
+                  className={isConnected ? "bg-success text-success-foreground" : ""}
+                >
+                  {isConnected ? "●" : "○"}
                 </Badge>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Сообщений:</span>
-                <span className="text-xs font-medium">{messages.length}</span>
+            </CardHeader>
+            <CardContent className="flex flex-col space-y-3 p-3" style={{ height: 'calc(100vh - 200px)' }}>
+              {/* Messages - Fixed height with scroll */}
+              <ScrollArea className="flex-1" style={{ height: 'calc(100vh - 400px)' }} ref={scrollAreaRef}>
+                <div className="space-y-1 pr-2">
+                  {messages.map((msg) => (
+                    <div key={msg.id} className={`text-xs ${fontSize === 'small' ? 'text-[10px]' : fontSize === 'large' ? 'text-sm' : 'text-xs'}`}>
+                      <div className="flex items-baseline space-x-1">
+                        {showTime && (
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            {formatTime(msg.timestamp)}
+                          </span>
+                        )}
+                        {showBadges && (
+                          <span className="w-3 h-3 bg-primary/20 rounded-sm shrink-0"></span>
+                        )}
+                        <span className="font-medium text-primary shrink-0">
+                          {msg.nickname}:
+                        </span>
+                        <span className="break-words">
+                          {msg.message}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+
+              {/* Message Input */}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2 text-xs">
+                  <span className="text-muted-foreground">От:</span>
+                  <span className="font-medium text-primary">{currentAccount}</span>
+                </div>
+                <div className="flex space-x-1">
+                  <Input
+                    placeholder={isConnected ? "Сообщение..." : "Подключитесь"}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    disabled={!isConnected}
+                    className="text-xs h-8"
+                  />
+                  <Button 
+                    onClick={handleSendMessage}
+                    disabled={!message.trim() || !isConnected}
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                  >
+                    <Send className="w-3 h-3" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Ботов онлайн:</span>
-                <span className="text-xs font-medium">
-                  {isConnected ? Math.floor(Math.random() * 50) + 10 : 0}
-                </span>
-              </div>
+              
+              {/* Connection Button */}
+              <Button
+                onClick={toggleConnection}
+                variant={isConnected ? "destructive" : "default"}
+                size="sm"
+                className={!isConnected ? "bg-success hover:bg-success/90 text-success-foreground" : ""}
+              >
+                {isConnected ? "Отключить" : "Подключить"}
+              </Button>
             </CardContent>
           </Card>
         </div>
