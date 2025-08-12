@@ -62,7 +62,8 @@ const ProfileTab = ({ onLogout }: ProfileTabProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="h-[calc(100vh-140px)] overflow-y-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4">
       {/* Profile Info & Settings */}
       <div className="lg:col-span-2 space-y-6">
         {/* User Info */}
@@ -280,6 +281,7 @@ const ProfileTab = ({ onLogout }: ProfileTabProps) => {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );

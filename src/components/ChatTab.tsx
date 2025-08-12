@@ -75,7 +75,7 @@ const ChatTab = ({ loadedAccounts, loadedProxies, channelName }: ChatTabProps) =
       setCurrentAccount("");
     }
   }, [accounts]);
-  const [maxMessages] = useState(500); // Twitch standard
+  const [maxMessages] = useState(100); // Store max 100 messages
   const [chatSpeed, setChatSpeed] = useState("normal");
   const [soundNotifications, setSoundNotifications] = useState(false);
   const [showBadges, setShowBadges] = useState(true);
@@ -109,7 +109,7 @@ const ChatTab = ({ loadedAccounts, loadedProxies, channelName }: ChatTabProps) =
 
     setMessages(prev => {
       const newMessages = [...prev, newMessage];
-      // Keep only last maxMessages (Twitch standard: 500)
+      // Keep only last 100 messages as requested
       return newMessages.slice(-maxMessages);
     });
     
@@ -260,8 +260,8 @@ const ChatTab = ({ loadedAccounts, loadedProxies, channelName }: ChatTabProps) =
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col min-h-[400px]">
-            {/* Сообщения */}
-            <ScrollArea className="flex-1 mb-2 pr-2">
+            {/* Сообщения с фиксированной высотой и скроллом */}
+            <div className="flex-1 overflow-y-auto h-[350px] mb-2 pr-2" ref={scrollAreaRef}>
               <div className="space-y-1">
                 {messages.map((msg) => (
                   <div key={msg.id} className={`text-xs ${fontSize === 'small' ? 'text-[10px]' : fontSize === 'large' ? 'text-sm' : 'text-xs'}`}>
@@ -284,7 +284,7 @@ const ChatTab = ({ loadedAccounts, loadedProxies, channelName }: ChatTabProps) =
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
             {/* Ввод сообщения */}
             <div className="flex items-center gap-2 mt-2">
               <Input
