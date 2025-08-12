@@ -17,6 +17,7 @@ interface DashboardProps {
 }
 
 const Dashboard = ({ onLogout }: DashboardProps) => {
+  const [streamerNick, setStreamerNick] = useState("");
   const [loadedAccounts, setLoadedAccounts] = useState(0);
   const [loadedProxies, setLoadedProxies] = useState(0);
 
@@ -73,6 +74,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             loadedProxies={loadedProxies}
             onLoadAccounts={handleLoadAccounts}
             onLoadProxies={handleLoadProxies}
+            onStreamerChange={setStreamerNick}
           />
         </TabsContent>
         
@@ -80,6 +82,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
           <ChatTab 
             loadedAccounts={loadedAccounts}
             loadedProxies={loadedProxies}
+            channelName={streamerNick}
           />
         </TabsContent>
         

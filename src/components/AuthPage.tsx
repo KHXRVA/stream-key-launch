@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Zap } from "lucide-react";
+import { apiFetch } from "@/lib/api";
 
 interface AuthPageProps {
   onAuth: () => void;
@@ -11,18 +12,28 @@ interface AuthPageProps {
 const AuthPage = ({ onAuth }: AuthPageProps) => {
   const [key, setKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!key.trim()) return;
-    
     setIsLoading(true);
-    // Simulate auth check
-    setTimeout(() => {
+    setError(null);
+    try {
+      // Предполагается, что backend принимает POST /auth { key } и возвращает { token }
+      const res = await apiFetch<{ token: string }>("/auth", {
+        method: "POST",
+        body: { key },
+      });
+      sessionStorage.setItem("access_token", res.token);
       setIsLoading(false);
       onAuth();
-    }, 1500);
+    } catch (e: any) {
+      setIsLoading(false);
+      setError(e.message || "Ошибка авторизации");
+    }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
@@ -63,6 +74,10 @@ const AuthPage = ({ onAuth }: AuthPageProps) => {
                 />
               </div>
             </div>
+
+            {error && (
+              <div className="text-red-500 text-sm text-center">{error}</div>
+            )}
 
             <Button
               type="submit"
