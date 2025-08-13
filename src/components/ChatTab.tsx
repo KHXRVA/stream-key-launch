@@ -83,19 +83,22 @@ const ChatTab = ({ loadedAccounts, loadedProxies, channelName }: ChatTabProps) =
   const [isConnected, setIsConnected] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (autoScroll && scrollAreaRef.current) {
+      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLDivElement;
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
+    }
+  }, [messages, autoScroll]);
+
   // Mock bot accounts
   const botAccounts = Array.from({ length: loadedAccounts }, (_, i) => `StreamBot_${String(i + 1).padStart(3, '0')}`);
   const filteredBots = botAccounts.filter(bot => 
     bot.toLowerCase().includes(searchBot.toLowerCase())
   );
 
-  useEffect(() => {
-    // Auto-scroll to bottom when new messages arrive
-    if (autoScroll && scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
-  }, [messages, autoScroll]);
 
   const handleSendMessage = () => {
     if (!message.trim() || !isConnected) return;
@@ -170,6 +173,59 @@ const ChatTab = ({ loadedAccounts, loadedProxies, channelName }: ChatTabProps) =
             >
               {isConnected ? "Отключить" : "Подключить"}
             </Button>
+            
+            {/* Список ботов при подключении */}
+            {isConnected && botAccounts.length > 0 && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium">Активные боты</span>
+                  <Button
+                    onClick={() => setShowAccountsList(!showAccountsList)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                  >
+                    {showAccountsList ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </Button>
+                </div>
+                
+                {showAccountsList && (
+                  <>
+                    <div className="relative mb-2">
+                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                      <Input
+                        placeholder="Поиск бота..."
+                        value={searchBot}
+                        onChange={(e) => setSearchBot(e.target.value)}
+                        className="text-xs h-7 pl-7"
+                      />
+                    </div>
+                    
+                    <ScrollArea className="h-32 mb-2">
+                      <div className="space-y-1 pr-2">
+                        {filteredBots.map((bot) => (
+                          <div
+                            key={bot}
+                            onClick={() => setCurrentAccount(bot)}
+                            className={`p-2 rounded cursor-pointer text-xs transition-colors ${
+                              currentAccount === bot 
+                                ? 'bg-primary text-primary-foreground' 
+                                : 'hover:bg-muted'
+                            }`}
+                          >
+                            {bot}
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                    
+                    <div className="text-xs text-muted-foreground">
+                      Выбран: <span className="font-medium">{currentAccount}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -261,8 +317,8 @@ const ChatTab = ({ loadedAccounts, loadedProxies, channelName }: ChatTabProps) =
           </CardHeader>
           <CardContent className="flex-1 flex flex-col min-h-[400px]">
             {/* Сообщения с фиксированной высотой и скроллом */}
-            <div className="flex-1 overflow-y-auto h-[350px] mb-2 pr-2" ref={scrollAreaRef}>
-              <div className="space-y-1">
+            <ScrollArea className="flex-1 h-[350px] mb-2" ref={scrollAreaRef}>
+              <div className="space-y-1 pr-2">
                 {messages.map((msg) => (
                   <div key={msg.id} className={`text-xs ${fontSize === 'small' ? 'text-[10px]' : fontSize === 'large' ? 'text-sm' : 'text-xs'}`}>
                     <div className="flex items-baseline space-x-1">
@@ -284,7 +340,7 @@ const ChatTab = ({ loadedAccounts, loadedProxies, channelName }: ChatTabProps) =
                   </div>
                 ))}
               </div>
-            </div>
+            </ScrollArea>
             {/* Ввод сообщения */}
             <div className="flex items-center gap-2 mt-2">
               <Input
