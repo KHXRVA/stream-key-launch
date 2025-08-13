@@ -315,32 +315,34 @@ const ChatTab = ({ loadedAccounts, loadedProxies, channelName }: ChatTabProps) =
               <span>Чат стрима</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col min-h-[400px]">
-            {/* Сообщения с фиксированной высотой и скроллом */}
-            <ScrollArea className="flex-1 h-[350px] mb-2" ref={scrollAreaRef}>
-              <div className="space-y-1 pr-2">
-                {messages.map((msg) => (
-                  <div key={msg.id} className={`text-xs ${fontSize === 'small' ? 'text-[10px]' : fontSize === 'large' ? 'text-sm' : 'text-xs'}`}>
-                    <div className="flex items-baseline space-x-1">
-                      {showTime && (
-                        <span className="text-[10px] text-muted-foreground shrink-0">
-                          {formatTime(msg.timestamp)}
+          <CardContent className="flex-1 flex flex-col">
+            {/* Сообщения чата с фиксированной высотой */}
+            <div className="flex-1 relative">
+              <ScrollArea className="absolute inset-0" ref={scrollAreaRef}>
+                <div className="space-y-1 p-2">
+                  {messages.map((msg) => (
+                    <div key={msg.id} className={`${fontSize === 'small' ? 'text-[10px]' : fontSize === 'large' ? 'text-sm' : 'text-xs'}`}>
+                      <div className="flex items-baseline space-x-1 leading-relaxed">
+                        {showTime && (
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            {formatTime(msg.timestamp)}
+                          </span>
+                        )}
+                        {showBadges && (
+                          <span className="w-3 h-3 bg-primary/20 rounded-sm shrink-0"></span>
+                        )}
+                        <span className="font-medium text-primary shrink-0">
+                          {msg.nickname}:
                         </span>
-                      )}
-                      {showBadges && (
-                        <span className="w-3 h-3 bg-primary/20 rounded-sm shrink-0"></span>
-                      )}
-                      <span className="font-medium text-primary shrink-0">
-                        {msg.nickname}:
-                      </span>
-                      <span className="break-words">
-                        {msg.message}
-                      </span>
+                        <span className="break-words">
+                          {msg.message}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
             {/* Ввод сообщения */}
             <div className="flex items-center gap-2 mt-2">
               <Input
